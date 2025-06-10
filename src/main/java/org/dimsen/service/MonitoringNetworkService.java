@@ -30,35 +30,37 @@ public class MonitoringNetworkService {
     @Inject
     SnmpRepository snmpRepository;
 
-//    public String getSysDesc(String ip) throws Exception {
-//        Address targetAddress = GenericAddress.parse("udp:" + ip + "/161");
-//        TransportMapping<UdpAddress>  transport = new DefaultUdpTransportMapping();
-//        Snmp snmp = new Snmp(transport);
-//        transport.listen();
-//
-//        CommunityTarget target = new CommunityTarget();
-//        target.setCommunity(new OctetString("public"));
-//        target.setAddress(targetAddress);
-//        target.setRetries(2);
-//        target.setTimeout(10000);
-//        target.setVersion(SnmpConstants.version2c);
-//
-//        PDU pdu = new PDU();
-//        pdu.add(new VariableBinding(new OID("1.3.6.1.2.1.2.2.1.2.17"))); // ifDescr.17
-//        pdu.setType(PDU.GET);
-//
-//        ResponseEvent response = snmp.send(pdu, target);
-//        snmp.close();
-//
-//        if (response.getResponse() != null) {
-//            return response.getResponse().get(0).getVariable().toString();
-//        } else  {
-//            return "No response";
-//        }
-//    }
+    public String getSysDesc(String ip, String oidKey) throws Exception {
+        Address targetAddress = GenericAddress.parse("udp:" + ip + "/161");
+        TransportMapping<UdpAddress>  transport = new DefaultUdpTransportMapping();
+        Snmp snmp = new Snmp(transport);
+        transport.listen();
+
+        CommunityTarget target = new CommunityTarget();
+        target.setCommunity(new OctetString("public"));
+        target.setAddress(targetAddress);
+        target.setRetries(2);
+        target.setTimeout(10000);
+        target.setVersion(SnmpConstants.version2c);
+
+        PDU pdu = new PDU();
+        pdu.add(new VariableBinding(new OID(oidKey)));
+        pdu.setType(PDU.GET);
+
+        ResponseEvent response = snmp.send(pdu, target);
+        snmp.close();
+
+        if (response.getResponse() != null) {
+            return response.getResponse().get(0).getVariable().toString();
+        } else  {
+            return "No response";
+        }
+    }
 
     public Map<String, String> snmpWalk(String ip, String startOid) throws IOException {
         Map<String, String> result = new HashMap<>();
+        List<String> pairs = new ArrayList<>();
+
         Address targetAddress = GenericAddress.parse("udp:" + ip + "/161");
         TransportMapping<UdpAddress> transport = new DefaultUdpTransportMapping();
         Snmp snmp = new Snmp(transport);
@@ -97,12 +99,15 @@ public class MonitoringNetworkService {
 
             result.put(vb.getOid().toString(), vb.getVariable().toString());
 
+            pairs.add(vb.getOid().toString() + " : " + vb.getVariable().toString());
+
             currentOID = vb.getOid();
         }
 
         SnmpEntry snmpEntry = SnmpEntry.builder()   
                 .oid(result.keySet().toString())
                 .value(result.values().toString())
+                .pair(pairs.toString())
                 .build();
 
         snmpRepository.saveData(snmpEntry);

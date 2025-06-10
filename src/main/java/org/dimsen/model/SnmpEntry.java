@@ -25,17 +25,27 @@ public class SnmpEntry extends PanacheEntityBase {
     @Column(name = "oid_value", columnDefinition = "TEXT")
     private String value;
 
+    @Column(name = "oid_pair", columnDefinition = "TEXT")
+    private String pair;
+
     public SnmpEntry() {
     }
 
-    public SnmpEntry(Long id, String oid, String value) {
+    public SnmpEntry(Long id, String oid, String value, String pair) {
         this.id = id;
         this.oid = oid;
         this.value = value;
+        this.pair = pair;
     }
 
     public SnmpEntry(String oid, String value) {
         this.oid = oid;
         this.value = value;
+    }
+
+    public SnmpEntry(String oid, String value, String pair) {
+        this.oid = oid;
+        this.value = value;
+        this.pair = pair;
     }
 }
